@@ -1,0 +1,15 @@
+name: "Paul Blischak"
+output_dir: "."
+navbar:
+  title: HyDe-CNN
+  right:
+  - icon: fa-github-square
+    href: https://github.com/pblischak/hyde-cnn
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
+    include:
+      after_body: footer.md
+    lib_dir: site_libs
+    self_contained: no

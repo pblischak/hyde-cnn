@@ -1,0 +1,50 @@
+---
+title: "**HyDe-CNN: Hybridization Detection with Convolutional Neural Networks**"
+output:  
+  html_document:  
+    toc: true  
+    toc_float: true
+---
+<style>
+.center {
+  display: block;
+  padding-top: 1em;
+  padding-bottom: 1em;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+}
+
+p {
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+}
+</style>
+
+----
+
+# Getting Started
+
+**Python packages you will need:**
+
+ - tensorflow
+ - keras
+ - scikit-learn
+ - numpy
+ - matplotlib
+ - ete3
+
+There is also an `environment.yml` file in the `hyde-cnn` repo on GitHub, which
+can be used to replicate the Conda environment that was used for running all
+analyses.
+
+# Simulating Data
+
+
+
+# Converting Data to Images
+
+# Training the CNN
+
+# Testing CNN Accuracy
+
