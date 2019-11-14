@@ -5,3 +5,4 @@ LICENSE.html
 .jshintrc
 .editorconfig
 old
+.ipynb_checkpoints
