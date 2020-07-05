@@ -1,0 +1,540 @@
+.. _Simulation:
+
+Simulating data with *msprime*
+==============================
+
+
+
+No hybridization
+----------------
+
+.. code-block:: python
+
+  import msprime as msp
+  import numpy as np
+
+  def no_hybridization(coal_units=1.0):
+      """
+      Out    P3    P2    P1
+      |      |     |     |
+      |      |     |     |
+      |      |     |-----|
+      |      |           |
+      |      |           |
+      |      |-----------|
+      |            |
+      |            |
+      |------------|
+            |
+
+
+      """
+      # Coalescent units are the number of 2N generations
+      time_units = 2.0 * 1000.0 * coal_units
+
+      # Draw divergence times
+      tau1 = np.random.gamma(10.0, 1.0 / 10.0)
+      tau2 = np.random.gamma(10.0, 1.0 / 10.0) + tau1
+      tau3 = np.random.gamma(20.0, 1.0 / 10.0) + tau2
+
+      # Draw mutation and recombination rates
+      mu = np.random.uniform(1e-8, 1e-9)
+      r  = np.random.uniform(1e-8, 1e-9)
+
+      # Set up population configurations
+      population_configurations = [
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          )
+      ]
+
+      # Set up demographic events
+      demographic_events = [
+          msp.MassMigration(
+              time = tau1 * time_units,
+              source = 0, destination=1,
+              proportion=1.0
+          ),
+          msp.MassMigration(
+              time = tau2 * time_units,
+              source = 1, destination=2,
+              proportion=1.0
+          ),
+          msp.MassMigration(
+              time = tau3 * time_units,
+              source = 2, destination=3,
+              proportion=1.0
+          )
+      ]
+
+      return ([time_units, tau1, tau2, tau3, mu, r],
+              msp.simulate(length=1e7, mutation_rate=mu, recombination_rate=r,
+                           population_configurations=population_configurations,
+                           demographic_events=demographic_events))
+
+Hybrid speciation
+-----------------
+
+.. code-block:: python
+
+  import msprime as msp
+  import numpy as np
+
+  def hybrid_speciation(coal_units=1.0):
+      """
+      Out    P3    P2    P1
+       |      |     |     |
+       |      |     |     |
+       |      |     |     |
+       |      |----/ \----|
+       |      |           |
+       |      |-----------|
+       |            |
+       |            |
+       |------------|
+              |
+
+
+      """
+      # Coalescent units are the number of 2N generations
+      time_units = 2.0 * 1000.0 * coal_units
+
+      # Draw divergence times
+      tau1 = np.random.gamma(10.0, 1.0 / 10.0)
+      tau2 = np.random.gamma(10.0, 1.0 / 10.0) + tau1
+      tau3 = np.random.gamma(20.0, 1.0 / 10.0) + tau2
+
+      # Draw mutation and recombination rates
+      mu = np.random.uniform(1e-8, 1e-9)
+      r  = np.random.uniform(1e-8, 1e-9)
+
+      # Draw admixture proportion
+      gamma = np.random.uniform(0.25, 0.75)
+
+      # Set up population configurations
+      population_configurations = [
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          )
+      ]
+
+      # Set up demographic events
+      demographic_events = [
+          msp.MassMigration(
+              time = tau1 * time_units,
+              source = 1, destination = 2,
+              proportion = gamma
+          ),
+          msp.MassMigration(
+              time = tau1 * time_units + 1e-6,
+              source = 1, destination = 0,
+              proportion = 1.0
+          ),
+          msp.MassMigration(
+              time = tau2 * time_units,
+              source = 0, destination = 2,
+              proportion = 1.0
+          ),
+          msp.MassMigration(
+              time = tau3 * time_units,
+              source = 2, destination = 3,
+              proportion = 1.0
+          )
+      ]
+
+      return ([time_units, tau1, tau2, tau3, mu, r, gamma],
+              msp.simulate(length=1e7, mutation_rate=mu, recombination_rate=r,
+                           population_configurations=population_configurations,
+                           demographic_events=demographic_events))
+
+Admixture
+---------
+
+.. code-block:: python
+
+  import msprime as msp
+  import numpy as np
+  def admixture(coal_units=1.0):
+      """
+      Out    P3    P2    P1
+       |      |     |     |
+       |      |---->|     |
+       |      |     |     |
+       |      |      \----|
+       |      |           |
+       |      |-----------|
+       |            |
+       |            |
+       |------------|
+              |
+
+
+      """
+      # Coalescent units are the number of 2N generations
+      time_units = 2.0 * 1000.0 * coal_units
+
+      # Draw divergence times
+      tau1 = np.random.gamma(10.0, 1.0 / 10.0)
+      tau2 = np.random.gamma(10.0, 1.0 / 10.0) + tau1
+      tau3 = np.random.gamma(20.0, 1.0 / 10.0) + tau2
+
+      # Draw mutation and recombination rates
+      mu = np.random.uniform(1e-8, 1e-9)
+      r  = np.random.uniform(1e-8, 1e-9)
+
+      # Draw admixture proportion
+      gamma = np.random.uniform(0.01, 0.25)
+
+      # Draw admixture time, restrict to occurring between
+      # and 10% and 90% of tau1
+      admix_time = np.random.uniform(0.1 * tau1, 0.9 * tau1)
+
+      # Set up population configurations
+      population_configurations = [
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          )
+      ]
+
+      # Set up demographic events
+      demographic_events = [
+          msp.MassMigration(
+              time = admix_time * time_units,
+              source = 1, destination = 2,
+              proportion = gamma
+          ),
+          msp.MassMigration(
+              time = tau1 * time_units,
+              source = 1, destination = 0,
+              proportion = 1.0
+          ),
+          msp.MassMigration(
+              time = tau2 * time_units,
+              source = 0, destination = 2,
+              proportion = 1.0
+          ),
+          msp.MassMigration(
+              time = tau3 * time_units,
+              source = 2, destination = 3,
+              proportion = 1.0
+          )
+      ]
+
+      return ([time_units, tau1, tau2, tau3, mu, r, gamma, admix_time],
+              msp.simulate(length=1e7, mutation_rate=mu, recombination_rate=r,
+                           population_configurations=population_configurations,
+                           demographic_events=demographic_events))
+
+Admixture with gene flow
+------------------------
+
+.. code-block:: python
+
+  import msprime as msp
+  import numpy as np
+
+  def admixture_w_gflow(coal_units=1.0):
+      """
+      Out    P3    P2    P1
+       |      |     |<--->|
+       |      |---->|<--->|
+       |      |     |<--->|
+       |      |      \----|
+       |      |           |
+       |      |-----------|
+       |            |
+       |            |
+       |------------|
+              |
+
+      """
+      # Coalescent units are the number of 2N generations
+      time_units = 2.0 * 1000.0 * coal_units
+
+      # Draw divergence times
+      tau1 = np.random.gamma(10.0, 1.0 / 10.0)
+      tau2 = np.random.gamma(10.0, 1.0 / 10.0) + tau1
+      tau3 = np.random.gamma(20.0, 1.0 / 10.0) + tau2
+
+      # Draw mutation and recombination rates
+      mu = np.random.uniform(1e-8, 1e-9)
+      r  = np.random.uniform(1e-8, 1e-9)
+
+      # Draw admixture proportion
+      gamma = np.random.uniform(0.01, 0.25)
+
+      # Draw admixture time, restrict to occurring between
+      # and 10% and 90% of tau1
+      admix_time = np.random.uniform(0.1 * tau1, 0.9 * tau1)
+
+      m = np.random.uniform(5.0e-4, 1.0e-3)
+
+      migration_matrix = [
+          [0, m, 0, 0],
+          [m, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0]
+      ]
+
+      # Set up population configurations
+      population_configurations = [
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          ),
+          msp.PopulationConfiguration(
+              sample_size=5,
+              initial_size=1000
+          )
+      ]
+
+      # Set up demographic events
+      demographic_events = [
+          msp.MassMigration(
+              time = admix_time * time_units,
+              source = 1, destination = 2,
+              proportion = gamma
+          ),
+          msp.MassMigration(
+              time = tau1 * time_units,
+              source = 1, destination = 0,
+              proportion = 1.0
+          ),
+          msp.MigrationRateChange(
+              time=tau1 * time_units,
+              rate=0
+          ),
+          msp.MassMigration(
+              time = tau2 * time_units,
+              source = 0, destination = 2,
+              proportion = 1.0
+          ),
+          msp.MassMigration(
+              time = tau3 * time_units,
+              source = 2, destination = 3,
+              proportion = 1.0
+          )
+      ]
+
+      return ([time_units, tau1, tau2, tau3, mu, r, gamma, admix_time, m],
+              msp.simulate(length=1e7, mutation_rate=mu, recombination_rate=r,
+                           population_configurations=population_configurations,
+                           migration_matrix=migration_matrix,
+                           demographic_events=demographic_events))
+
+.. code-block:: python
+
+  #!/usr/bin/env python3
+
+  """
+  << run_sims.py >>
+
+  Simulate data sets from admixture/hybridization models.
+
+  Arguments
+  ---------
+
+  For more specific details, type: run_sims.py -h
+
+      - model <string> : name of model to run ['no_hybridization','hybrid_speciation','admixture']
+      - cu    <float>  : branch scaling in coalescent units
+
+  Output
+  ------
+
+  Writes a compressed numpy array with simulated values of nucleotide diversity (pi)
+  in 1000 windows across all pairwise comparisons of taxa and individuals.
+  """
+
+  from models import (
+      no_hybridization,
+      hybrid_speciation,
+      admixture,
+      admixture_w_gflow
+  )
+  import numpy as np
+  import tskit as tsk
+  from random import shuffle
+  from sys import argv, exit
+  import argparse
+
+  def open_file(filename, mode):
+      try:
+          handle = open(filename, mode)
+      except:
+          print("Error: Could not open {}...".format(filename))
+          exit(-1)
+      return handle
+
+  def print_params(params, f_out):
+      for i in range(len(params)-1):
+          print("{},".format(params[i]), end='', file=f_out)
+      print(params[-1], file=f_out)
+      if (sim+1) % 50 == 0: f_out.flush()
+
+  if __name__ == "__main__":
+      """
+      Run the script from the command line.
+      """
+      # Print docstring if only the name of the script is given
+      if len(argv) < 2:
+          print(__doc__)
+          exit(0)
+
+      # Parse command line arguments
+      parser = argparse.ArgumentParser(description="Options for run_sims.py", add_help=True)
+
+      required = parser.add_argument_group("required arguments")
+      required.add_argument('-m', '--model', action="store", type=str, required=True,
+                            metavar='\b',
+                            help="name of model to simulate ['no_hybridization','hybrid_speciation','admixture','admixture_w_gflow']")
+      additional = parser.add_argument_group("additional arguments")
+      additional.add_argument('-cu','--coal_units', action="store", type=float, default=1.0,
+                              metavar='\b', help="branch scaling in coalescent units")
+
+      args       = parser.parse_args()
+      model_name = args.model
+      cu         = args.coal_units
+
+      if model_name == "no_hybridization":
+          print("Running simulations for no_hybridization model...", flush=True)
+          model = no_hybridization
+      elif model_name == "hybrid_speciation":
+          print("Running simulations for hybrid_speciation model...", flush=True)
+          model = hybrid_speciation
+      elif model_name == "admixture":
+          print("Running simulations for admixture model...", flush=True)
+          model = admixture
+      elif model_name == "admixture_w_gflow":
+          print("Running simulations for admixture_w_gflow model...", flush=True)
+          model = admixture_w_gflow
+      else:
+          print("Invalid model name supplied: {}".format(model_name), flush=True)
+          print("The following models are currently implemented:", flush=True)
+          print("  no_hybridization", flush=True)
+          print("  hybrid_speciation", flush=True)
+          print("  admixture", flush=True)
+          print("  admixture_w_gflow", flush=True)
+          exit(-1)
+
+      # Specify the number of simulations
+      nsims = 20000
+
+      # Define sample sets
+      samples_P1_P2  = [[i, j+5] for i in range(5) for j in range(5)]
+      samples_P1_P3  = [[i, j+10] for i in range(5) for j in range(5)]
+      samples_P2_P3  = [[i+5, j+10] for i in range(5) for j in range(5)]
+      samples_P1_Out = [[i, j+15] for i in range(5) for j in range(5)]
+      samples_P2_Out = [[i+5, j+15] for i in range(5) for j in range(5)]
+      samples_P3_Out = [[i+10, j+15] for i in range(5) for j in range(5)]
+
+      # Specify the number of windows to calculate pi
+      nwindows = 1000
+      windows = [i for i in range(0,int(1e7)+1,10000)]
+
+      # Specify the print frequency for tracking completed simulations
+      # Set to None if you don't want to print
+      print_freq = 1000
+
+      # Open CSV files for recording parameters used to simulate data
+      model_out  = open_file("{}_{}.csv".format(model_name, cu), 'w')
+
+      # Define the numpy array that will hold the simulated
+      # windows of pi. The size of the last dimensions (6) comes
+      # from the fact that we are working with 4 species 2 at a time:
+      # 4 choose 2 = 6.
+      model_mean = np.zeros((nsims, nwindows, 6))
+      model_min  = np.zeros((nsims, nwindows, 6))
+      model_std  = np.zeros((nsims, nwindows, 6))
+
+      for sim in range(nsims):
+          """
+          This is the main loop for doing the simulaitons.
+          """
+          model_params, model_ts = model(cu)
+          print_params(model_params, model_out)
+
+          model_mean[sim,:,0] = np.mean(model_ts.diversity(samples_P1_P2, windows=windows).T, axis=0)
+          model_min[sim,:,0]  = np.min(model_ts.diversity(samples_P1_P2, windows=windows).T, axis=0)
+          model_std[sim,:,0]  = np.std(model_ts.diversity(samples_P1_P2, windows=windows).T, axis=0)
+
+          model_mean[sim,:,1] = np.mean(model_ts.diversity(samples_P1_P3, windows=windows).T, axis=0)
+          model_min[sim,:,1]  = np.min(model_ts.diversity(samples_P1_P3, windows=windows).T, axis=0)
+          model_std[sim,:,1]  = np.std(model_ts.diversity(samples_P1_P3, windows=windows).T, axis=0)
+
+          model_mean[sim,:,2] = np.mean(model_ts.diversity(samples_P2_P3, windows=windows).T, axis=0)
+          model_min[sim,:,2]  = np.min(model_ts.diversity(samples_P2_P3, windows=windows).T, axis=0)
+          model_std[sim,:,2]  = np.std(model_ts.diversity(samples_P2_P3, windows=windows).T, axis=0)
+
+          model_mean[sim,:,3] = np.mean(model_ts.diversity(samples_P1_Out, windows=windows).T, axis=0)
+          model_min[sim,:,3]  = np.min(model_ts.diversity(samples_P1_Out, windows=windows).T, axis=0)
+          model_std[sim,:,3]  = np.std(model_ts.diversity(samples_P1_Out, windows=windows).T, axis=0)
+
+          model_mean[sim,:,4] = np.mean(model_ts.diversity(samples_P2_Out, windows=windows).T, axis=0)
+          model_min[sim,:,4]  = np.min(model_ts.diversity(samples_P2_Out, windows=windows).T, axis=0)
+          model_std[sim,:,4]  = np.std(model_ts.diversity(samples_P2_Out, windows=windows).T, axis=0)
+
+          model_mean[sim,:,5] = np.mean(model_ts.diversity(samples_P3_Out, windows=windows).T, axis=0)
+          model_min[sim,:,5]  = np.min(model_ts.diversity(samples_P3_Out, windows=windows).T, axis=0)
+          model_std[sim,:,5]  = np.std(model_ts.diversity(samples_P3_Out, windows=windows).T, axis=0)
+
+          if print_freq is not None and (sim+1) % print_freq == 0:
+              print("Completed {} simulation iterations...".format(sim+1), flush=True)
+
+      np.savez_compressed('{}_{}.npz'.format(model_name, cu), mean=model_mean, min=model_min, std=model_std)
+      print("Done.", flush=True)
+
+----
+
+**References**
+
+  - J Kelleher, AM Etheridge, and G McVean. 2016. Efficient Coalescent Simulation
+    and Genealogical Analysis for Large Sample Sizes. *PLoS Computational Biology*
+    12:e1004842.

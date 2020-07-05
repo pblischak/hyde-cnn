@@ -1,19 +1,37 @@
-# HyDe-CNN: Hybridization Detection with Convolutional Neural Networks
+## HyDe-CNN: Hybridization detection with convolutional neural networks
 
-This repository contains worked examples of using deep learning models for hybridization
-detection.
+**Citation**
 
-More details can be found within each of the main folders:
+Blischak, P. D., M. S. Barker, and R. N. Gutenkunst. 2020. Chromosome-scale
+inference of hybrid speciation and admixture with convolutional neural networks.
+*bioRxiv* doi:[]().
 
- - **`model-selection/`**: Train a CNN classifier to distinguish among four different
-   hybridization scenarios.
+## [ReadTheDocs](https://pblischak.github.io/hyde-cnn)
 
-### To Do
 
- - [] **`estimate-gamma/`**: Train a CNN regression model to estimate
-   the hybridization parameter, gamma (0 < gamma < 1).
- - [] **`timing-gamma/`**: Train a CNN regression model to estimate
-   both gamma and the timing of the hybridization event.
 
-We hope to continue exploring different applications of CNNs for the analysis of hybridization
-and will post them to this repo as we go.
+## Requirements
+
+Below are the Python and R packages that were used for performing the analyses
+in our paper. We used Python v3.7 and R v3.6.
+
+**Python packages:**
+
+The `environment.yml` has all of the specifications needed to recreate the conda
+environment we used for simulating, training, and testing HyDe-CNN. If you just
+want to install the essential packages, they are listed below:
+
+ - numpy
+ - matplotlib
+ - tensorflow
+ - sklearn
+ - tskit
+ - msprime
+ - pysam
+
+**R packages:**
+
+ - tidyverse
+ - abcrf
+ - caret
+ - patchwork

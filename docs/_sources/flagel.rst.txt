@@ -1,0 +1,4 @@
+.. _FlagelNet:
+
+Specifying the Flagel *et al.* CNN architecture
+===============================================

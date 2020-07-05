@@ -1,0 +1,32 @@
+.. polyploid-demography documentation master file, created by
+   sphinx-quickstart on Tue Jan 21 09:39:08 2020.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+HyDe-CNN: Hybridization detection with convolutional neural networks
+====================================================================
+
+.. code-block:: bash
+
+   conda create -n cnn python=3.7
+   conda activate cnn
+   conda install tensorflow numpy msprime scikit-learn matplotlib
+
+Documentation
+=============
+
+.. toctree::
+   :maxdepth: 1
+
+   simulation.rst
+   data_prep.rst
+   cnn.rst
+   flagel.rst
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

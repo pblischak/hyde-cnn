@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+
+"""
+<< train_mean_flagel.py >>
+
+
+Arguments
+---------
+
+
+
+Output
+------
+
+
+"""
+
+from sys import argv,exit
+import argparse
+import numpy as np
+import tensorflow.keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import (
+    Dense,
+    Dropout,
+    Flatten
+)
+from tensorflow.keras.layers import (
+    Conv1D,
+    AveragePooling1D
+)
+from tensorflow.keras.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint
+)
+from tensorflow.keras.losses import categorical_crossentropy
+from tensorflow.keras.optimizers import Adam
+#from tensorflow.keras import backend as K
+
+if __name__ == '__main__':
+    """
+    Run the script from the command line.
+    """
+    # Print docstring if only the name of the script is given
+    if len(argv) < 2:
+        print(__doc__)
+        exit(0)
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Options for train_min_flagel.py", add_help=True)
+
+    required = parser.add_argument_group("required arguments")
+    required.add_argument('-cu','--coal_units', action="store", type=float, default=1.0,
+                            metavar='\b', help="branch scaling in coalescent units")
+
+    args = parser.parse_args()
+    cu   = args.coal_units
+    data = np.load("../processed_data/hyde_cnn_min_data_{}.npz".format(cu))
+    xtrain,xval,ytrain,yval = (
+        data['xtrain'],
+        data['xval'],
+        data['ytrain'],
+        data['yval']
+    )
+    del data
+
+    xtrain = np.reshape(xtrain, (xtrain.shape[0],xtrain.shape[1],xtrain.shape[2]))
+    xval   = np.reshape(xval, (xval.shape[0],xval.shape[1],xval.shape[2]))
+
+    model = Sequential()
+    model.add(
+        Conv1D(
+            64, kernel_size=2,
+            #strides=(2,1),
+            activation='relu',
+            input_shape=(xtrain.shape[1],xtrain.shape[2])
+        )
+    )
+    model.add(
+        Conv1D(
+            32, kernel_size=2,
+            activation='relu'
+        )
+    )
+    model.add(
+        AveragePooling1D(
+            pool_size=2
+        )
+    )
+    model.add(Dropout(0.25))
+
+    model.add(
+        Conv1D(
+            32, kernel_size=2,
+            activation='relu'
+        )
+    )
+    model.add(
+        AveragePooling1D(
+            pool_size=2
+        )
+    )
+    model.add(Dropout(0.25))
+
+    model.add(Flatten())
+    model.add(Dense(32, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(4, activation='softmax'))
+    model.compile(
+        loss=categorical_crossentropy,
+        optimizer=Adam(),
+        metrics=['accuracy']
+    )
+    print(model.summary())
+    #exit(0)
+
+    callbacks = [
+        EarlyStopping(monitor='val_loss'),
+        ModelCheckpoint(
+            filepath='hyde_flagel_min_{}.mdl'.format(cu),
+            monitor='val_loss',
+            save_best_only=True
+        )
+    ]
+    model.fit(
+        xtrain, ytrain,
+        batch_size=32,
+        epochs=10,
+        verbose=1,
+        callbacks=callbacks,
+        validation_data=(xval,yval)
+    )
