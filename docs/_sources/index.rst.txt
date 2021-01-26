@@ -22,6 +22,7 @@ Documentation
    data_prep.rst
    cnn.rst
    flagel.rst
+   heliconius.rst
 
 
 Indices and tables

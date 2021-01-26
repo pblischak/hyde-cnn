@@ -3,7 +3,8 @@
 Simulating data with *msprime*
 ==============================
 
-
+The Python scripts for simulating input data for training can be found in the ``run_sims.py``
+and ``models.py`` files. Below is the code for each model specified using *msprime*.
 
 No hybridization
 ----------------

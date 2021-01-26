@@ -1,0 +1,164 @@
+.. _Heliconius:
+
+Empirical example: *Heliconius* butterflies
+===========================================
+
+The scripts for simulating, training, and testing HyDe-CNN for *Heliconius* can
+be found in the ``heliconius/`` folder on GitHub and are run in the same way as
+the scripts for the simulation-based evaluations. Below is the code for analyzing
+100 random samples of individuals
+
+.. code-block:: python
+
+  # Import packages
+  import numpy as np
+  import pysam
+  from tensorflow.keras.models import load_model
+
+  # Load trained models
+  min_cnn = load_model('heliconius_cnn_min.mdl')
+  mean_cnn = load_model('heliconius_cnn_mean.mdl')
+  min_mean_cnn = load_model('heliconius_cnn_min-mean.mdl')
+  min_flagel = load_model('heliconius_flagel_min.mdl')
+  mean_flagel = load_model('heliconius_flagel_mean.mdl')
+
+  # Define container class for calculating pi
+  class HeliconiusPi():
+    """
+    Simple container class for storing relevant information for
+    the Heliconius samples. Doesn't do anything fancy, just allows
+    access to data.
+    """
+
+    def __init__(self):
+        self.HeliconiusIdx = {
+            'ama'  : [i for i in range(10)],
+            'chi'  : [i for i in range(10,20)],
+            'flo'  : [i for i in range(20,30)],
+            'mal'  : [i for i in range(30,40)],
+            'melG' : [i for i in range(40,50)],
+            'num'  : [50,51],
+            'ros'  : [i for i in range(52,62)],
+            'txn'  : [i for i in range(62,72)],
+            'vul'  : [i for i in range(72,82)],
+            'zel'  : [i for i in range(82,92)],
+            'melW' : [i for i in range(52,62)]+[i for i in range(72,82)],
+            'melE' : [i for i in range(10)]+[i for i in range(30,40)],
+            'cyd'  : [i for i in range(10,20)]+[i for i in range(82,92)],
+            'tim'  : [i for i in range(20,30)]+[i for i in range(62,72)]
+        }
+        self.vcf_file = "heliconius_chr5.vcf.gz"
+        self.vcf = pysam.VariantFile(self.vcf_file)
+        print("Preparing to process vcf file {}".format(self.vcf_file))
+
+    def __call__(self,p1,p2,p3):
+        """
+        Makes any instance of the class callable as a function, which
+        does all of the sampling and returns an imput image.
+        """
+        pi_mat = np.zeros((950,6,2))
+        windows = np.linspace(200000,9700000,950+1)
+        p1_idx, p2_idx, p3_idx = self.get_random_idx(p1,p2,p3)
+        print("Calculating pi for the following taxa:")
+        print("  {}: individuals {}".format(p1, p1_idx))
+        print("  {}: individuals {}".format(p2, p2_idx))
+        print("  {}: individuals {}".format(p3, p3_idx))
+        for w in range(950):
+            gt = self.get_gts(windows[w],windows[w+1])
+            _,pi_mat[w,0,0],pi_mat[w,0,1] = self.calc_pi(gt,p1_idx,p2_idx)
+            _,pi_mat[w,1,0],pi_mat[w,1,1] = self.calc_pi(gt,p1_idx,p3_idx)
+            _,pi_mat[w,2,0],pi_mat[w,2,1] = self.calc_pi(gt,p2_idx,p3_idx)
+            _,pi_mat[w,3,0],pi_mat[w,3,1] = self.calc_pi(gt,p1_idx,self.HeliconiusIdx['num'])
+            _,pi_mat[w,4,0],pi_mat[w,4,1] = self.calc_pi(gt,p2_idx,self.HeliconiusIdx['num'])
+            _,pi_mat[w,5,0],pi_mat[w,5,1] = self.calc_pi(gt,p3_idx,self.HeliconiusIdx['num'])
+        return pi_mat
+
+    def get_random_idx(self,p1,p2,p3):
+        """
+        Randomly sample 5 individuals from melW, melE, and cyd to calculate
+        pairwise nucleotide diversity.
+        """
+        p1_idx = np.random.choice(self.HeliconiusIdx[p1], 5, replace=False)
+        p2_idx = np.random.choice(self.HeliconiusIdx[p2], 5, replace=False)
+        p3_idx = np.random.choice(self.HeliconiusIdx[p3], 5, replace=False)
+        return (p1_idx,p2_idx,p3_idx)
+
+    def get_gts(self,start,stop):
+        """
+        Retrieves the genotypes for all individuals within the window
+        [start,stop). 0-indexed.
+        """
+        gts = []
+        for rec in self.vcf.fetch('chr5',start-1,stop-1):
+            gts.append([s['GT'] for s in rec.samples.values()])
+        return gts
+
+    def calc_pi(self,gt,idx1,idx2):
+        """
+        """
+        def check_if_same(gt1,gt2):
+            if gt1 is None or gt2 is None:
+                return -9
+            elif gt1 != gt2:
+                return 1
+            else:
+                return 0
+        pi_array = []
+        nsnps = len(gt)
+        for i in range(len(idx1)):
+            for j in range(len(idx2)):
+                pi_site = 0.0
+                for l in range(nsnps):
+                    if gt[l][idx1[i]][0] is None or gt[l][idx2[j]][0] is None:
+                        continue
+                    ct = Counter([gt[l][idx1[i]][0],gt[l][idx2[j]][0],gt[l][idx1[i]][1],gt[l][idx2[j]][1]])
+                    x = list(ct.values())[0]
+                    pi_site +=  x*(4.0-x)/12.0
+                pi_array += [pi_site]
+        return (pi_array,np.min(pi_array),np.mean(pi_array))
+
+  # Instantiate class
+  hpi = HeliconiusPi()
+
+  # Run 100 replicate tests and store
+  min_cnn_res      = []
+  mean_cnn_res     = []
+  min_mean_cnn_res = []
+  min_flagel_res   = []
+  for i in range(100):
+      mat = hpi('melE','melW','cyd')
+      min_dat = np.zeros((1,950,6,1))
+      min_dat[0,:,:,0] = mat[:,:,0]/np.max(mat[:,:,0])
+      mean_dat = np.zeros((1,950,6,1))
+      mean_dat[0,:,:,0] = mat[:,:,1]/np.max(mat[:,:,1])
+      min_mean_dat = np.zeros((1,950,6,2))
+      min_mean_dat[0,:,:,0] = mat[:,:,0]/np.max(mat[:,:,0])
+      min_mean_dat[0,:,:,1] = mat[:,:,1]/np.max(mat[:,:,1])
+      min_dat_flagel = np.zeros((1,950,6))
+      min_dat_flagel[0,:,:] = mat[:,:,0]/np.max(mat[:,:,0])
+      min_cnn_res.append(min_cnn.predict(min_dat)[0])
+      mean_cnn_res.append(mean_cnn.predict(mean_dat)[0])
+      min_mean_cnn_res.append(min_mean_cnn.predict(min_mean_dat)[0])
+      min_flagel_res.append(min_flagel.predict(min_dat_flagel)[0])
+      print('Finished iteration {}...'.format(i+1), flush=True)
+
+  # Get average prediction accuracy
+  print("Prediction for min CNN: {}".format(np.mean(np.array(min_cnn_res),axis=0)))
+  print("Prediction for mean CNN: {}".format(np.mean(np.array(mean_cnn_res),axis=0)))
+  print("Prediction for min-mean CNN: {}".format(np.mean(np.array(min_mean_cnn_res),axis=0)))
+  print("Prediction for flagel CNN: {}".format(np.mean(np.array(min_flagel_res),axis=0)))
+
+  # Also, save results to file
+  np.savetxt("min_cnn_res.csv",np.array(min_cnn_res),delimiter=",")
+  np.savetxt("meann_cnn_res.csv",np.array(mean_cnn_res),delimiter=",")
+  np.savetxt("min_mean_cnn_res.csv",np.array(min_mean_cnn_res),delimiter=",")
+  np.savetxt("min_flagel_res.csv",np.array(min_flagel_res),delimiter=",")
+
+----
+
+**References**
+
+  - SH Martin, JW Davey, C Salazar, and CD Jiggins. 2019. Recombination rate
+    variation shapes barriers to introgression across butterfly genomes.
+    *PLoS Biology* 17:e2006288.
+  - Dryad link for *Heliconius VCFs*: https://doi.org/10.5061/dryad.sk2pd88.

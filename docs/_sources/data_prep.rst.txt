@@ -3,21 +3,11 @@
 Preparing input data
 ====================
 
+The Python scripts ``prepare_*_cnn.py`` and ``prepare_*_flagel.py`` contain the code needed
+to process the data simulated by *msprime* and convert it into compressed and labeled numpy
+arrays. Below is an example for minimum :math:`d_{XY}`.
+
 .. code-block:: python
-
-  """
-  << prepare_data.py >>
-
-  Arguments
-  ---------
-
-
-
-  Output
-  ------
-
-
-  """
 
   import numpy as np
   from random import shuffle

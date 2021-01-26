@@ -1,4 +1,117 @@
 .. _FlagelNet:
 
-Specifying the Flagel *et al.* CNN architecture
-===============================================
+Specifying the modified Flagel *et al.* CNN architecture
+========================================================
+
+The Python scripts containing code to train the modified Flagel *et al.* network can be found in the files
+``train_*_flagel.py``. They can be run using the following command commands:
+
+.. code-block:: bash
+
+  # Here divergence_scaling is either 0.5, 1.0, or 2.0 coalescent units
+
+  # Minimum dXY network
+  python3 train_min_flagel.py --coal_units <divergence_scaling>
+
+  # Mean dXY network
+  python3 train_mean_flagel.py --coal_units <divergence_scaling>
+
+TensorFlow imports
+------------------
+
+.. code-block:: python
+
+  import tensorflow.keras
+  from tensorflow.keras.models import Sequential
+  from tensorflow.keras.layers import (
+    Dense,
+    Dropout,
+    Flatten
+  )
+  from tensorflow.keras.layers import (
+    Conv1D,
+    AveragePooling1D
+  )
+  from tensorflow.keras.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint
+  )
+  from tensorflow.keras.losses import categorical_crossentropy
+  from tensorflow.keras.optimizers import Adam
+
+Specifying the network architecture
+-----------------------------------
+
+.. code-block:: python
+
+  model = Sequential()
+  model.add(
+      Conv1D(
+          64, kernel_size=2,
+          activation='relu',
+          input_shape=(xtrain.shape[1],xtrain.shape[2])
+      )
+  )
+  model.add(
+      Conv1D(
+          32, kernel_size=2,
+          activation='relu'
+      )
+  )
+  model.add(
+      AveragePooling1D(
+          pool_size=2
+      )
+  )
+  model.add(Dropout(0.25))
+
+  model.add(
+      Conv1D(
+          32, kernel_size=2,
+          activation='relu'
+      )
+  )
+  model.add(
+      AveragePooling1D(
+          pool_size=2
+      )
+  )
+  model.add(Dropout(0.25))
+
+  model.add(Flatten())
+  model.add(Dense(32, activation='relu'))
+  model.add(Dropout(0.5))
+  model.add(Dense(32, activation='relu'))
+  model.add(Dropout(0.5))
+  model.add(Dense(4, activation='softmax'))
+  model.compile(
+      loss=categorical_crossentropy,
+      optimizer=Adam(),
+      metrics=['accuracy']
+  )
+  print(model.summary())
+
+  callbacks = [
+      EarlyStopping(monitor='val_loss'),
+      ModelCheckpoint(
+          filepath='hyde_flagel_mean_{}.mdl'.format(cu),
+          monitor='val_loss',
+          save_best_only=True
+      )
+  ]
+  model.fit(
+      xtrain, ytrain,
+      batch_size=32,
+      epochs=10,
+      verbose=1,
+      callbacks=callbacks,
+      validation_data=(xval,yval)
+  )
+
+----
+
+**References**
+
+  - L Flagel, Y Brandvain, and DR Schrider. 2019. The Unreasonable Effectiveness of
+    Convolutional Neural Networks in Population Genetic Inference. *Molecular
+    Biology and Evolution* 36:220--238. https://doi.org/10.1093/molbev/msy224.
